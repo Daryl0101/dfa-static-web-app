@@ -9,9 +9,7 @@ although
 though
 because
 since
-unless
 until
-while
 after
 before
 as
@@ -22,12 +20,7 @@ that
 unless
 whereas
 while
-as much as
-even though
-now that
-in order that
 lest
-whereas
 whether
 however
 moreover
@@ -36,7 +29,6 @@ nonetheless
 consequently
 therefore
 thus
-accordingly
 hence
 besides
 furthermore
