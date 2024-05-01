@@ -186,7 +186,10 @@ with gr.Blocks() as demo:
     # Position block
     # positionTitle = gr.HTML("<h2 style='color: gold;'>Position</h2>")
     position = gr.Dataframe(
-        show_label=True, col_count=3, headers=["Words", "Positions", "Occurences"]
+        show_label=True,
+        col_count=3,
+        headers=["Words", "Positions", "Occurences"],
+        interactive=False,
     )
 
     submit_btn.click(
