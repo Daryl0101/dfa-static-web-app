@@ -1,8 +1,8 @@
 # Import libraries and modules
-# Run pip install gradio and wonderwords in terminal
+# Run pip install gradio and essential_generators in terminal
 import gradio as gr
 import pandas as pd
-from wonderwords import RandomSentence
+from essential_generators import DocumentGenerator
 from main import generate_dfa
 
 # DataFrame
@@ -18,12 +18,12 @@ with open("words.txt") as file:
 # DFA function call
 dfa = generate_dfa(words)
 
-# Generate examples || RandomSentence is not the best way to generate examples || Should be replaced with self-generated examples
+# Generate examples
 def generateExamples():
-    s = RandomSentence()
+    gen = DocumentGenerator()
     examples = []
     for i in range(3):
-        examples.append(s.sentence())
+        examples.append(gen.paragraph())
     return examples
 
 # Color match function
@@ -34,6 +34,10 @@ def color_match(text):
     # Get the result of the DFA check on the input text
     match_dict = dfa.check(text)
     
+    # Handling rejected case
+    if not match_dict:
+        return '<div style="background-color: #dc2626; color: #fff; text-align: center; width: 100%; padding: 10px; font-weight:800; font-size:1.5rem">Rejected</div>', None, None
+    
     # Flatten the match_dict into a list of tuples and sort by the start index
     matches = sorted((start, end, word) for word, indices in match_dict.items() for start, end in indices)
 
@@ -41,7 +45,7 @@ def color_match(text):
         colored_text.append(text[pointer:start])
         # print(f"Start: {start}, End: {end}, Word: {word}")
         # End need to be incremented by 1 to include the last character
-        colored_text.append(f'<span style="color:red;">{text[start:end + 1]}</span>')
+        colored_text.append(f"<span style='color:#4ade80'>{text[start:end + 1]}</span>")
         # print(f"Colored Text: {colored_text}")
         # Move the pointer to the end of the match
         pointer = end + 1
@@ -86,14 +90,14 @@ def getPositions(text):
     for word, positions in match_dict.items():
         # Convert the list of tuples to a string
         positions_str = ', '.join(map(str, positions))
-        print(f"Word: {word}, Positions: {positions_str}")
+        # print(f"Word: {word}, Positions: {positions_str}")
         # Store the word and the positions string in the wordPositions dictionary
         wordPositions[word] = positions_str
-        print(f"Word Positions: {wordPositions}")
+        # print(f"Word Positions: {wordPositions}")
 
     # Convert the wordPositions dictionary to a DataFrame
     positions_df = pd.DataFrame(list(wordPositions.items()), columns=['Words', 'Positions'])
-    print(f"Positions_df: {positions_df}")
+    # print(f"Positions_df: {positions_df}")
     
     return positions_df
 
@@ -119,9 +123,8 @@ def search_and_display(search_query):
 with gr.Blocks() as demo:
     
     # Title block
-    # Apply CSS styling to the title
-    title = gr.HTML("<h1 style='color: gold; margin-bottom: 0px font-weight:bold'>English Conjuction Finder</h1>")
-    description = gr.HTML("<p style='color: #fef9c3;'>Enter a text and see the words that are accepted by the DFA highlighted in red.</p>")
+    title = gr.HTML("<h1 style='color: #2563eb; font-weight:bold'>English Conjuction Finder</h1>")
+    description = gr.HTML("<p style='color: #a78bfa;'>Enter a text and see the words that are accepted by the DFA highlighted in <span style='color:#4ade80'>green</span>.</p>")
     
     # Search block
     search = gr.Textbox(label="Search", placeholder="Search accepted words here", lines=1, info="List of accpetable words in DFA")
@@ -136,7 +139,7 @@ with gr.Blocks() as demo:
     line_break = gr.HTML("<br>")
     
     # Text block for DFA and color match
-    textTitle = gr.HTML("<h2>Try it here!</h2>")
+    textTitle = gr.HTML("<h2 style='color: #2563eb;'>Try it here!</h2>")
     text = gr.Textbox(label="Text", placeholder="Enter text here", info="Enter text to check for DFA match")
     submit_btn = gr.Button(value="Submit")
     
@@ -148,21 +151,20 @@ with gr.Blocks() as demo:
     )
     
     # Result block
-    resultTitle = gr.HTML("<h2 style='color: gold; margin-bottom: 5px'>Result</h2>")    
+    resultTitle = gr.HTML("<h2 style='color: #2563eb;'>Result</h2>")    
     result = gr.HTML("<p></p>")
     
     # Occurrences block
-    occurrencesTitle = gr.HTML("<h2 style='color: gold; margin-bottom: 5px'>Occurrences</h2>")
+    occurrencesTitle = gr.HTML("<h2 style='color: #2563eb;'>Occurrences</h2>")
     occurrences = gr.Dataframe()
 
     # Position block
-    positionTitle = gr.HTML("<h2 style='color: gold;'>Position</h2>")
+    positionTitle = gr.HTML("<h2 style='color: #2563eb;'>Position</h2>")
     position = gr.Dataframe()
     
     submit_btn.click(
         color_match, inputs=[text], outputs=[result, occurrences, position], api_name=False
     )
-
 # Launch the app
-demo.launch(share=True)
+demo.launch()
     
