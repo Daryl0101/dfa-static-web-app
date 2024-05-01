@@ -37,7 +37,7 @@ class DFA:
         chars = list(paragraph)
 
         current_word = ""
-        accepted_words: dict[list[tuple[int, int]]] = (
+        accepted_words: dict[str : list[tuple[int, int]]] = (
             {}
         )  # returns: {word: [(start_index, end_index)]}
 

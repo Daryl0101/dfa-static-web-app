@@ -6,19 +6,29 @@ from essential_generators import DocumentGenerator
 from main import generate_dfa
 
 # DataFrame
-words = []
-with open("words.txt") as file:
-    words = file.read().splitlines()
-    words = [word.strip() for word in words]
+conjunctions = []
+with open("conjunctions.txt") as file:
+    conjunctions = file.read().splitlines()
+    conjunctions = [word.strip() for word in conjunctions]
+with open("adverbs.txt") as file:
+    adverbs = file.read().splitlines()
+    adverbs = [word.strip() for word in adverbs]
+with open("adjectives.txt") as file:
+    adjectives = file.read().splitlines()
+    adjectives = [word.strip() for word in adjectives]
 
-    df = pd.DataFrame(
-        {
-            "Words": words,
-        }
-    )
+df = pd.DataFrame(columns=["Words", "Type"])
+for i in conjunctions:
+    df.loc[len(df)] = [i, "Conjunction"]
+for i in adverbs:
+    df.loc[len(df)] = [i, "Adverb"]
+for i in adjectives:
+    df.loc[len(df)] = [i, "Adjective"]
 
 # DFA function call
-dfa = generate_dfa(words)
+dfa_conjunctions = generate_dfa(conjunctions)
+dfa_adverbs = generate_dfa(adverbs)
+dfa_adjectives = generate_dfa(adjectives)
 
 
 # Generate examples
@@ -36,9 +46,11 @@ def color_match(text: gr.Textbox):
     pointer = 0
 
     # Get the result of the DFA check on the input text
-    match_dict = dfa.check(text)
+    match_dict_conj = dfa_conjunctions.check(text)
+    match_dict_adv = dfa_adverbs.check(text)
+    match_dict_adj = dfa_adjectives.check(text)
 
-    if not match_dict:
+    if not match_dict_conj and not match_dict_adv and not match_dict_adj:
         return (
             '<div style="background-color: #dc2626; color: #fff; text-align: center; width: 100%; padding: 10px; font-weight:800; font-size:1.5rem">Rejected</div>',
             None,
@@ -47,9 +59,21 @@ def color_match(text: gr.Textbox):
 
     # Flatten the match_dict into a list of tuples and sort by the start index
     matches = sorted(
-        (start, end, word)
-        for word, indices in match_dict.items()
-        for start, end in indices
+        [
+            (start, end, word)
+            for word, indices in match_dict_conj.items()
+            for start, end in indices
+        ]
+        + [
+            (start, end, word)
+            for word, indices in match_dict_adv.items()
+            for start, end in indices
+        ]
+        + [
+            (start, end, word)
+            for word, indices in match_dict_adj.items()
+            for start, end in indices
+        ]
     )
 
     for start, end, word in matches:
@@ -64,23 +88,53 @@ def color_match(text: gr.Textbox):
     # Combine the strings
     colored_text = "".join(colored_text)
 
-    # Call getPositions function and get the DataFrame
-    positions_df = getPositions(text)
+    # Create the DataFrame
+    positions_df = pd.DataFrame(columns=["Words", "Positions", "Occurences", "Type"])
+    for word, positions in match_dict_conj.items():
+        # Convert the list of tuples to a string
+        positions_str = ", ".join(map(str, positions))
+        # Store the word and the positions string in the wordPositions dictionary
+        positions_df.loc[len(positions_df)] = [
+            word,
+            positions_str,
+            len(positions),
+            "Conjunction",
+        ]
+    for word, positions in match_dict_adv.items():
+        # Convert the list of tuples to a string
+        positions_str = ", ".join(map(str, positions))
+        # Store the word and the positions string in the wordPositions dictionary
+        positions_df.loc[len(positions_df)] = [
+            word,
+            positions_str,
+            len(positions),
+            "Adverb",
+        ]
+    for word, positions in match_dict_adj.items():
+        # Convert the list of tuples to a string
+        positions_str = ", ".join(map(str, positions))
+        # Store the word and the positions string in the wordPositions dictionary
+        positions_df.loc[len(positions_df)] = [
+            word,
+            positions_str,
+            len(positions),
+            "Adjective",
+        ]
 
     return colored_text, positions_df
 
 
-# Get positions function
-def getPositions(text):
-    match_dict = dfa.check(text)
-    positions_df = pd.DataFrame(columns=["Words", "Positions", "Occurences"])
-    for word, positions in match_dict.items():
-        # Convert the list of tuples to a string
-        positions_str = ", ".join(map(str, positions))
-        # Store the word and the positions string in the wordPositions dictionary
-        positions_df.loc[len(positions_df)] = [word, positions_str, len(positions)]
+# # Get positions function
+# def getPositions(text):
+#     match_dict = dfa_conjunctions.check(text)
+#     positions_df = pd.DataFrame(columns=["Words", "Positions", "Occurences"])
+#     for word, positions in match_dict.items():
+#         # Convert the list of tuples to a string
+#         positions_str = ", ".join(map(str, positions))
+#         # Store the word and the positions string in the wordPositions dictionary
+#         positions_df.loc[len(positions_df)] = [word, positions_str, len(positions)]
 
-    return positions_df
+#     return positions_df
 
 
 # Search and display function
@@ -132,13 +186,15 @@ with gr.Blocks() as demo:
             label="Search",
             placeholder="Search accepted words here",
             lines=1,
-            info="List of accpetable words in DFA",
+            info="List of acceptable words in DFA",
             show_copy_button=True,
         )
         with gr.Row():
             cancel_btn = gr.ClearButton(search, variant="stop", interactive=False)
             search_btn = gr.Button(value="Search", variant="primary")
-        resultSearch = gr.Dataframe(df, height=300, col_count=1, headers=["Words"])
+        resultSearch = gr.Dataframe(
+            df, height=300, col_count=2, headers=["Words", "Type"]
+        )
 
         search.change(
             text_change_search,
@@ -187,8 +243,8 @@ with gr.Blocks() as demo:
     # positionTitle = gr.HTML("<h2 style='color: gold;'>Position</h2>")
     position = gr.Dataframe(
         show_label=True,
-        col_count=3,
-        headers=["Words", "Positions", "Occurences"],
+        col_count=4,
+        headers=["Words", "Positions", "Occurences", "Type"],
         interactive=False,
     )
 
