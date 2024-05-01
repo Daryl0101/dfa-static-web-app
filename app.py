@@ -89,16 +89,16 @@ def color_match(text: gr.Textbox):
     colored_text = "".join(colored_text)
 
     # Create the DataFrame
-    positions_df = pd.DataFrame(columns=["Words", "Positions", "Occurences", "Type"])
+    positions_df = pd.DataFrame(columns=["Words", "Type", "Positions", "Occurences"])
     for word, positions in match_dict_conj.items():
         # Convert the list of tuples to a string
         positions_str = ", ".join(map(str, positions))
         # Store the word and the positions string in the wordPositions dictionary
         positions_df.loc[len(positions_df)] = [
             word,
+            "Conjunction",
             positions_str,
             len(positions),
-            "Conjunction",
         ]
     for word, positions in match_dict_adv.items():
         # Convert the list of tuples to a string
@@ -106,9 +106,9 @@ def color_match(text: gr.Textbox):
         # Store the word and the positions string in the wordPositions dictionary
         positions_df.loc[len(positions_df)] = [
             word,
+            "Adverb",
             positions_str,
             len(positions),
-            "Adverb",
         ]
     for word, positions in match_dict_adj.items():
         # Convert the list of tuples to a string
@@ -116,25 +116,12 @@ def color_match(text: gr.Textbox):
         # Store the word and the positions string in the wordPositions dictionary
         positions_df.loc[len(positions_df)] = [
             word,
+            "Adjective",
             positions_str,
             len(positions),
-            "Adjective",
         ]
 
     return colored_text, positions_df
-
-
-# # Get positions function
-# def getPositions(text):
-#     match_dict = dfa_conjunctions.check(text)
-#     positions_df = pd.DataFrame(columns=["Words", "Positions", "Occurences"])
-#     for word, positions in match_dict.items():
-#         # Convert the list of tuples to a string
-#         positions_str = ", ".join(map(str, positions))
-#         # Store the word and the positions string in the wordPositions dictionary
-#         positions_df.loc[len(positions_df)] = [word, positions_str, len(positions)]
-
-#     return positions_df
 
 
 # Search and display function
@@ -244,7 +231,7 @@ with gr.Blocks() as demo:
     position = gr.Dataframe(
         show_label=True,
         col_count=4,
-        headers=["Words", "Positions", "Occurences", "Type"],
+        headers=["Words", "Type", "Positions", "Occurences"],
         interactive=False,
     )
 
