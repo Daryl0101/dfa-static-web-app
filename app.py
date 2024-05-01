@@ -124,7 +124,7 @@ with gr.Blocks() as demo:
     # Title block
     # Apply CSS styling to the title
     title = gr.HTML(
-        "<h1 style='color: #2563eb; font-weight:bold'>English Conjuction Finder</h1>"
+        "<h1 style='color: #2563eb; font-weight:bold'>English Conjunctions/Adverb/Adjectives Finder</h1>"
     )
     with gr.Accordion("Accepted Words", open=False):
         # Search block
