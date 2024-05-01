@@ -1,8 +1,8 @@
 # Import libraries and modules
-# Run pip install gradio and wonderwords in terminal
+# Run pip install gradio and essential_generators in terminal
 import gradio as gr
 import pandas as pd
-from wonderwords import RandomSentence
+from essential_generators import DocumentGenerator
 from main import generate_dfa
 
 # DataFrame
@@ -21,23 +21,29 @@ with open("words.txt") as file:
 dfa = generate_dfa(words)
 
 
-# Generate examples || RandomSentence is not the best way to generate examples || Should be replaced with self-generated examples
+# Generate examples
 def generateExamples():
-    s = RandomSentence()
+    gen = DocumentGenerator()
     examples = []
     for i in range(3):
-        examples.append(s.sentence())
+        examples.append(gen.paragraph())
     return examples
 
 
 # Color match function
 def color_match(text: gr.Textbox):
-    print(type(text))
     colored_text = []
     pointer = 0
 
     # Get the result of the DFA check on the input text
     match_dict = dfa.check(text)
+
+    if not match_dict:
+        return (
+            '<div style="background-color: #dc2626; color: #fff; text-align: center; width: 100%; padding: 10px; font-weight:800; font-size:1.5rem">Rejected</div>',
+            None,
+            None,
+        )
 
     # Flatten the match_dict into a list of tuples and sort by the start index
     matches = sorted(
@@ -48,23 +54,18 @@ def color_match(text: gr.Textbox):
 
     for start, end, word in matches:
         colored_text.append(text[pointer:start])
-        # print(f"Start: {start}, End: {end}, Word: {word}")
         # End need to be incremented by 1 to include the last character
-        colored_text.append(f'<span style="color:red;">{text[start:end + 1]}</span>')
-        # print(f"Colored Text: {colored_text}")
+        colored_text.append(f"<span style='color:#4ade80'>{text[start:end + 1]}</span>")
         # Move the pointer to the end of the match
         pointer = end + 1
 
     # Add remaining text
     colored_text.append(text[pointer:])
-    # print(f"Text before merge: {colored_text}")
     # Combine the strings
     colored_text = "".join(colored_text)
-    # print(f"Colored Text after merging: {colored_text}")
 
     # Call getPositions function and get the DataFrame
     positions_df = getPositions(text)
-    # print(f"Positions_df: {positions_df}")
 
     return colored_text, positions_df
 
@@ -76,11 +77,8 @@ def getPositions(text):
     for word, positions in match_dict.items():
         # Convert the list of tuples to a string
         positions_str = ", ".join(map(str, positions))
-        print(f"Word: {word}, Positions: {positions_str}")
         # Store the word and the positions string in the wordPositions dictionary
-        # wordPositions[word] = {"Position": positions_str, "Occurences": len(positions)}
         positions_df.loc[len(positions_df)] = [word, positions_str, len(positions)]
-        print(f"Word Positions: {positions_df}")
 
     return positions_df
 
@@ -89,7 +87,6 @@ def getPositions(text):
 def search_and_display(search_query):
     # Filter the DataFrame based on the search query
     filtered_df = df[df["Words"].str.contains(search_query)]
-    # print(f"Filtered text: {filtered_df}")
     return filtered_df
 
 
@@ -107,6 +104,10 @@ def text_change_test(text: gr.Textbox):
         return gr.update(interactive=True), gr.update(interactive=True)
 
 
+def remove_output(result, position):
+    return None, None
+
+
 # CSS styling
 # css = """
 # warning {background-color: #FFCCCB}
@@ -120,17 +121,12 @@ def text_change_test(text: gr.Textbox):
 
 # Gradio UI
 with gr.Blocks() as demo:
-
     # Title block
     # Apply CSS styling to the title
     title = gr.HTML(
-        "<h1 style='color: gold; margin-bottom: 0px font-weight:bold'>English Conjuction Finder</h1>"
+        "<h1 style='color: #2563eb; font-weight:bold'>English Conjuction Finder</h1>"
     )
     with gr.Accordion("Accepted Words", open=False):
-        description = gr.HTML(
-            "<p style='color: #fef9c3;'>Enter a text and see the words that are accepted by the DFA highlighted in red.</p>"
-        )
-
         # Search block
         search = gr.Textbox(
             label="Search",
@@ -154,11 +150,11 @@ with gr.Blocks() as demo:
             search_and_display, inputs=[search], outputs=[resultSearch], api_name=False
         )
 
-    # Adding a line break
-    line_break = gr.HTML("<br>")
-
     # Text block for DFA and color match
-    textTitle = gr.HTML("<h2>Try it here!</h2>")
+    textTitle = gr.HTML("<h2 style='color: #2563eb;'>Try it here!</h2>")
+    description = gr.HTML(
+        "<p style='color: #a78bfa;'>Enter a text and see the words that are accepted by the DFA highlighted in <span style='color:#4ade80'>green</span>.</p>"
+    )
     text = gr.Textbox(
         autofocus=True,
         label="Text",
@@ -174,7 +170,7 @@ with gr.Blocks() as demo:
         inputs=[text],
     )
     with gr.Row():
-        cancel_btn = gr.ClearButton(text, variant="stop", interactive=False)
+        cancel_btn = gr.ClearButton([text], variant="stop", interactive=False)
         submit_btn = gr.Button(value="Submit", variant="primary", interactive=False)
 
     text.change(
@@ -184,7 +180,7 @@ with gr.Blocks() as demo:
     )
 
     # Result block
-    resultTitle = gr.HTML("<h2 style='color: gold; margin-bottom: 5px'>Result</h2>")
+    resultTitle = gr.HTML("<h2 style='color: #2563eb;'>Result</h2>")
     result = gr.HTML("<p></p>")
 
     # Position block
@@ -199,6 +195,11 @@ with gr.Blocks() as demo:
         outputs=[result, position],
         api_name=False,
     )
+    cancel_btn.click(
+        remove_output,
+        inputs=[result, position],
+        outputs=[result, position],
+    )
 
 # Launch the app
-demo.launch(share=True)
+demo.launch()
