@@ -15,12 +15,9 @@ class DFA:
         current_state = self.initial_state
 
         for char in input_string:
-            if char not in self.alphabets:
-                return False
-
-            current_state = self.transitions.get(current_state, {}).get(char, None)
-            if current_state is None:
-                return False
+            current_state = self.transitions.get(current_state, {}).get(
+                char, len(self.states) - 1
+            )
 
         return current_state in self.final_states
 
@@ -136,4 +133,19 @@ def generate_dfa(input_strings: list[str]) -> DFA:
         # Add the final state to the set of final states
         final_states.add(current_state)
 
+    # Add the trap state to the set of states
+    states.add(len(states))
+
+    # Add the trap state to the transition functions
+    for state in states:
+        if state not in transition_functions:
+            transition_functions[state] = {}
+        for alphabet in alphabets:
+            if alphabet not in transition_functions[state]:
+                transition_functions[state][alphabet] = len(states) - 1
+
     return DFA(alphabets, states, transition_functions, 0, final_states)
+
+
+dfa = generate_dfa(["and", "but", "or", "because"])
+print(dfa.check("me and you."))
