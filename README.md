@@ -1,5 +1,5 @@
-# dfa-static-web-app
-Static Web App for a DFA
+# DFA Static Web App
+Static Web App for a Deterministic Finite Automata (DFA)
 ## Prerequisites
 1. Pull this repo.
 2. Create a virtual environment using the command `py -m venv env`.
